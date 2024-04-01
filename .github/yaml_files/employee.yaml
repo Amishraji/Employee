@@ -18,7 +18,7 @@ spec:
       - name: employee
         image: 992382462614.dkr.ecr.us-west-2.amazonaws.com
         ports:
-        - containerPort: 3000
+        - containerPort: 5000
         imagePullPolicy: Always
 ---
 apiVersion: v1
@@ -31,5 +31,5 @@ spec:
   type: NodePort
   ports:
     - protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 5000
+      targetPort: 5000
