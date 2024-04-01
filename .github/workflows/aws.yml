@@ -54,4 +54,6 @@ jobs:
         run: |
           kubectl apply -f ${{ env.EKS_keycloak }}
           kubectl set image deployment/employee ${{ env.CONTAINER_NAME1 }}=${{ steps.build-image1.outputs.image }}
+          kubectl get pods 
           kubectl rollout status deployment/employee
+          kubectl get pods 
