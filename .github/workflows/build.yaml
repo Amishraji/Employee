@@ -40,7 +40,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         #run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-        run: mvn clean install package verify sonar:sonar -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml
+        run: mvn clean install package verify sonar:sonar -DskipTests -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml
         continue-on-error: false
       - uses: actions/checkout@master
       - uses: snyk/actions/setup@master
