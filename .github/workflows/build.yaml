@@ -1,9 +1,10 @@
-name: Build
-on:  
+name: Build and Deploy
+
+on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-  
+
 jobs:
   build:
     name: Build
@@ -33,17 +34,33 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: us-west-2
       - name: Build and analyze
+        id: build_and_analyze
         env:
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        #run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-        run: mvn clean install package verify sonar:sonar -DskipTests -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml
-        continue-on-error: false
-      - uses: actions/checkout@master
-      - uses: snyk/actions/setup@master
-      - uses: actions/setup-go@v1
+        run: |
+          mvn clean verify sonar:sonar -DskipTests -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.qualitygate.wait=true -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml
+          if [ $? -ne 0 ]; then
+            echo "Build and analysis failed"
+            exit 1
+          fi
+      - name: Trigger deployment
+        if: success() && steps.build_and_analyze.outcome == 'success'
+        uses: actions/github-script@0.9.0
         with:
-          go-version: '1.13'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const workflowFile = '.github/workflows/aws.yml'; // Path to your deployment workflow YAML file
+            const { data: workflows } = await github.actions.listRepoWorkflows({ owner: context.repo.owner, repo: context.repo.repo });
+            const deployWorkflow = workflows.workflows.find(workflow => workflow.path === workflowFile);
+            if (!deployWorkflow) {
+              throw new Error(`Workflow file ${workflowFile} not found.`);
+            }
+            await github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: deployWorkflow.id,
+            });
