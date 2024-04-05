@@ -1,8 +1,7 @@
-name: Deploy to Amazon EKS
+name: Publish to EKS on Development
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch: 
+
 env:
   AWS_REGION: us-west-2
   EKS_CLUSTER: my-eks
